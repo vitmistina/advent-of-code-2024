@@ -13,13 +13,18 @@ def initialize_day(date):
     day_folder = f"{year}_{day}"
     os.makedirs(day_folder, exist_ok=True)
 
-    main_file = os.path.join(day_folder, f"{year}_{day}.py")
+    init_file = os.path.join(day_folder, '__init__.py')
+    main_file = os.path.join(day_folder, f"aoc_{year}_{day}.py")
     test_file = os.path.join(day_folder, f"test_{year}_{day}.py")
     input_file = os.path.join(day_folder, f"{year}_{day}_input.txt")
     test_input_file = os.path.join(day_folder, f"{year}_{day}_test.txt")
 
     main_template = read_template('main_template.txt')
     test_template = read_template('test_template.txt')
+
+    # Create __init__.py file
+    with open(init_file, 'w') as f:
+        pass
 
     # Create main file
     with open(main_file, 'w') as f:
