@@ -4,8 +4,27 @@ import requests
 from dotenv import load_dotenv
 
 def read_template(template_name):
-    with open(template_name, 'r') as f:
-        return f.read()
+    try:
+        with open(template_name, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        sys.exit(f"Template file {template_name} not found.")
+
+def create_file(file_path, content=""):
+    try:
+        with open(file_path, 'w') as file:
+            file.write(content)
+    except IOError as e:
+        sys.exit(f"Failed to create file {file_path}: {e}")
+
+def download_input_file(url, cookies, input_file):
+    try:
+        response = requests.get(url, cookies=cookies)
+        response.raise_for_status()
+        with open(input_file, 'w') as file:
+            file.write(response.text)
+    except requests.RequestException as e:
+        sys.exit(f"Failed to download input file: {e}")
 
 def initialize_day(date):
     load_dotenv()
@@ -22,34 +41,16 @@ def initialize_day(date):
     main_template = read_template('main_template.txt')
     test_template = read_template('test_template.txt')
 
-    # Create __init__.py file
-    with open(init_file, 'w') as f:
-        pass
+    create_file(init_file)
+    create_file(main_file, main_template.format(year=year, day=day))
+    create_file(test_file, test_template.format(year=year, day=day))
+    create_file(test_input_file)
 
-    # Create main file
-    with open(main_file, 'w') as f:
-        f.write(main_template.format(year=year, day=day))
-
-    # Create test file
-    with open(test_file, 'w') as f:
-        f.write(test_template.format(year=year, day=day))
-
-    # Create empty test input file
-    with open(test_input_file, 'w') as f:
-        pass
-
-    # Download input file
     url = f"https://adventofcode.com/{year}/day/{int(day)}/input"
     cookies = {'session': os.getenv('SESSION_COOKIE')}
-    response = requests.get(url, cookies=cookies)
-    if response.status_code == 200:
-        with open(input_file, 'w') as f:
-            f.write(response.text)
-    else:
-        print(f"Failed to download input file: {response.status_code}")
+    download_input_file(url, cookies, input_file)    
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python init_day.py YYYY-dd")
-    else:
-        initialize_day(sys.argv[1])
+        sys.exit("Usage: python init_day.py YYYY-dd")
+    initialize_day(sys.argv[1])
