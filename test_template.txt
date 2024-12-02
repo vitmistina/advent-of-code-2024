@@ -3,10 +3,10 @@ import unittest
 from aoc_{year}_{day} import main
 
 class Test{year}{day}(unittest.TestCase):
-    def test_sample(self):
+    def test_day_{year}_{day}(self):
         result = main('./{year}_{day}/{year}_{day}_test.txt')
-        self.assertEqual(result, 100)
-        # Add test cases here
+        self.assertEqual(result["part_1"], 100)
+        self.assertEqual(result["part_2"], 100)
 
 if __name__ == "__main__":
     unittest.main()

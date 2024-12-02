@@ -23,8 +23,8 @@ def main(input_file_path: str) -> Dict[str, int]:
     differences = [abs(int(left) - int(right)) for left, right in zip(list_left, list_right)]
 
     return {
-        "differences": sum(differences),
-        "product": find_similarities(list_left, list_right)
+        "part_1": sum(differences),
+        "part_2": find_similarities(list_left, list_right)
     }
 
 if __name__ == "__main__":
