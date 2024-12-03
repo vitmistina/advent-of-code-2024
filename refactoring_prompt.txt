@@ -1,0 +1,1 @@
+Please read my advent of code very carefully. Be my seasoned backend developer in enterprise environment. How would you make the code much more Pythonic, easy to read, maintainable and extendable?
