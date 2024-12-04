@@ -14,18 +14,14 @@ def extract_diagonal_slices(data: List[str]) -> List[str]:
 
     return diagonals
 
-
-def count_occurrences(data: List[str], target: str) -> int:
+def calculate_part_1(data: List[str]) -> int:
+    target = "XMAS"
     counts = sum(line.count(target) + line[::-1].count(target) for line in data)
     columns = ["".join(col) for col in zip(*data)]
     counts += sum(col.count(target) + col[::-1].count(target) for col in columns)
     diagonals = extract_diagonal_slices(data) + extract_diagonal_slices(data[::-1])
     counts += sum(diagonal.count(target) + diagonal[::-1].count(target) for diagonal in diagonals)
     return counts
-
-
-def calculate_part_1(data: List[str]) -> int:
-    return count_occurrences(data, "XMAS")
 
 
 def calculate_part_2(data: List[str]) -> int:
