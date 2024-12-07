@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List, Optional
+from collections import deque
 
 
 class Operand(Enum):
@@ -56,6 +57,38 @@ class Calibrator:
         elif operand == Operand.CONCAT:
             return int(f"{accumulator}{num}") if self.part == PartType.PART_2 else None
         raise ValueError(f"Invalid operand: {operand}")
+
+    def depth_first_search(
+        self, expected: int, nums: List[int]
+    ) -> Optional[List[Operand]]:
+        stack = [(1, nums[0], [])]
+        while stack:
+            idx, accumulator, operands = stack.pop()
+            if idx == len(nums):
+                if accumulator == expected:
+                    return operands
+                continue
+            for operand in Operand:
+                provisional = self._apply_operand(accumulator, nums[idx], operand)
+                if provisional is not None and provisional <= expected:
+                    stack.append((idx + 1, provisional, operands + [operand]))
+        return None
+
+    def breadth_first_search(
+        self, expected: int, nums: List[int]
+    ) -> Optional[List[Operand]]:
+        queue = deque([(1, nums[0], [])])
+        while queue:
+            idx, accumulator, operands = queue.popleft()
+            if idx == len(nums):
+                if accumulator == expected:
+                    return operands
+                continue
+            for operand in Operand:
+                provisional = self._apply_operand(accumulator, nums[idx], operand)
+                if provisional is not None and provisional <= expected:
+                    queue.append((idx + 1, provisional, operands + [operand]))
+        return None
 
 
 def main(input_file_path: str):
