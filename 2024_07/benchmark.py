@@ -46,5 +46,17 @@ if __name__ == "__main__":
         )
         algo_times["dfs"] = time() - time_pre_run
 
+        time_pre_run = time()
+        part_2_results_backtrace = [
+            (pt_2_calibrator.backtrace(expected, nums), expected, nums)
+            for operator, expected, nums in part_2_results
+        ]
+        results["backtrace"] = sum(
+            expected
+            for operator, expected, nums in part_2_results_backtrace
+            if operator is not None
+        )
+        algo_times["backtrace"] = time() - time_pre_run
+
         print(algo_times)
         print(results)

@@ -4,9 +4,9 @@ from collections import deque
 
 
 class Operand(Enum):
-    ADD = 1
+    CONCAT = 1
     MUL = 2
-    CONCAT = 3
+    ADD = 3
 
 
 class PartType(Enum):
@@ -90,6 +90,48 @@ class Calibrator:
                     queue.append((idx + 1, provisional, operands + [operand]))
         return None
 
+    def backtrace(self, expected: int, nums: List[int]) -> Optional[List[Operand]]:
+        def helper(
+            expected: int, nums: List[int], operands: List[Operand]
+        ) -> Optional[List[Operand]]:
+            if not nums:
+                return operands if expected == 0 else None
+
+            last_num = nums[-1]
+            remaining_nums = nums[:-1]
+
+            for operand in Operand:
+                if operand == Operand.ADD and expected - last_num >= 0:
+                    result = helper(
+                        expected - last_num, remaining_nums, operands + [operand]
+                    )
+                    if result:
+                        return result
+                elif operand == Operand.MUL and expected % last_num == 0:
+                    result = helper(
+                        expected // last_num, remaining_nums, operands + [operand]
+                    )
+                    if result:
+                        return result
+                elif (
+                    operand == Operand.CONCAT
+                    and self.part == PartType.PART_2
+                    and str(expected).endswith(str(last_num))
+                ):
+                    chopped_off_end_number = (
+                        int(str(expected)[: -len(str(last_num))])
+                        if len(str(expected)) > len(str(last_num))
+                        else 0
+                    )
+                    result = helper(
+                        chopped_off_end_number, remaining_nums, operands + [operand]
+                    )
+                    if result:
+                        return result
+            return None
+
+        return helper(expected, nums, [])
+
 
 def main(input_file_path: str):
     with open(input_file_path) as f:
@@ -98,7 +140,7 @@ def main(input_file_path: str):
 
     pt_1_calibrator = Calibrator(PartType.PART_1)
     part_1_results = [
-        (pt_1_calibrator.roll_up_with_expressions(expected, nums), expected, nums)
+        (pt_1_calibrator.backtrace(expected, nums), expected, nums)
         for expected, nums in lines
     ]
     part_1_sum = sum(
@@ -107,7 +149,7 @@ def main(input_file_path: str):
 
     pt_2_calibrator = Calibrator(PartType.PART_2)
     part_2_results = [
-        (pt_2_calibrator.roll_up_with_expressions(expected, nums), expected, nums)
+        (pt_2_calibrator.backtrace(expected, nums), expected, nums)
         for operator, expected, nums in part_1_results
         if operator is None
     ]

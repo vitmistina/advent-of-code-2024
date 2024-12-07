@@ -6,3 +6,5 @@
 - manually calculate the test cases provided by author to understand the problem better
 - build new versions of algorithms step by step instead of copy pasting too much
   - When going from the backtrace to the roll_up, I was dealing with a for loop which had not place being there
+- the backtrace instinct was right, but I didn't have the patience to wrap my head around the concatenation
+  - opposite operation of concatenation is choppoffenation
