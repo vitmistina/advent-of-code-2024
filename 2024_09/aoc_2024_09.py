@@ -1,6 +1,5 @@
-from ast import List
+from typing import Deque, Dict, Optional, List
 from enum import Enum
-from typing import Deque, Dict, Optional
 from collections import deque
 
 
@@ -122,17 +121,15 @@ def aggregate_block_values(blocks: DoublyLinkedList) -> int:
 
 def process_blocks(data: str, part: PartType) -> DoublyLinkedList:
     blocks = DoublyLinkedList()
-    first_empty_node: Optional[Node] = None
-    last_data_node: Optional[Node] = None
+    first_empty_node, last_data_node = None, None
     for i, char in enumerate(data):
         num = int(char)
-        if i % 2 == 0:
-            blocks.push_back(Block(BlockType.DATA, i // 2, num))
+        block_type = BlockType.DATA if i % 2 == 0 else BlockType.FREE
+        blocks.push_back(Block(block_type, i // 2, num))
+        if block_type == BlockType.DATA:
             last_data_node = blocks.tail
-        else:
-            blocks.push_back(Block(BlockType.FREE, i // 2, num))
-            if first_empty_node is None:
-                first_empty_node = blocks.tail
+        elif first_empty_node is None:
+            first_empty_node = blocks.tail
     if part == PartType.PART_1:
         part_1(blocks, first_empty_node, last_data_node)
     else:
@@ -141,9 +138,7 @@ def process_blocks(data: str, part: PartType) -> DoublyLinkedList:
 
 
 def get_empty_spaces_by_length(blocks: DoublyLinkedList) -> Dict[int, Deque[Node]]:
-    empty_spaces: Dict[int, Deque[Node]] = {}
-    for i in range(1, 10):
-        empty_spaces[i] = deque()
+    empty_spaces = {i: deque() for i in range(1, 10)}
     for node in blocks:
         if node.block.block_type == BlockType.FREE and node.block.length > 0:
             empty_spaces[node.block.length].append(node)
@@ -151,7 +146,7 @@ def get_empty_spaces_by_length(blocks: DoublyLinkedList) -> Dict[int, Deque[Node
 
 
 def part_2(blocks: DoublyLinkedList) -> None:
-    empty_spaces: Dict[int, Deque[Node]] = get_empty_spaces_by_length(blocks)
+    empty_spaces = get_empty_spaces_by_length(blocks)
     nodes = list(blocks)
     last_processed_id = len(nodes)
     for last_node in reversed(nodes):
@@ -159,24 +154,19 @@ def part_2(blocks: DoublyLinkedList) -> None:
             last_node.block.block_type == BlockType.DATA
             and last_node.block.id < last_processed_id
         ):
-            potential: List[Block] = [
+            potential = [
                 empty_spaces[i][0].block
                 for i in range(last_node.block.length, 10)
                 if empty_spaces[i] and empty_spaces[i][0].block.id < last_node.block.id
             ]
             potential.sort(key=lambda x: x.id)
-
             if potential:
                 target_length = potential[0].length
                 target = empty_spaces[target_length].popleft()
                 target.block.length -= last_node.block.length
                 blocks.insert_after_node(
                     target.prev,
-                    Block(
-                        BlockType.DATA,
-                        last_node.block.id,
-                        last_node.block.length,
-                    ),
+                    Block(BlockType.DATA, last_node.block.id, last_node.block.length),
                 )
                 last_node.block.block_type = BlockType.FREE
                 if target.block.length == 0:
@@ -207,9 +197,7 @@ def part_1(
             blocks.insert_after_node(
                 first_empty_node.prev,
                 Block(
-                    BlockType.DATA,
-                    last_data_node.block.id,
-                    last_data_node.block.length,
+                    BlockType.DATA, last_data_node.block.id, last_data_node.block.length
                 ),
             )
             last_data_node.block.length = 0
@@ -219,9 +207,7 @@ def part_1(
             blocks.insert_after_node(
                 first_empty_node.prev,
                 Block(
-                    BlockType.DATA,
-                    last_data_node.block.id,
-                    last_data_node.block.length,
+                    BlockType.DATA, last_data_node.block.id, last_data_node.block.length
                 ),
             )
             first_empty_node.block.length = 0
