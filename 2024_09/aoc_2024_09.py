@@ -1,4 +1,4 @@
-from typing import Deque, Dict, Optional, List
+from typing import Deque, Dict, Optional
 from enum import Enum
 from collections import defaultdict, deque
 
