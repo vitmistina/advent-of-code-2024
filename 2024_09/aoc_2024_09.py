@@ -1,6 +1,6 @@
 from typing import Deque, Dict, Optional, List
 from enum import Enum
-from collections import deque
+from collections import defaultdict, deque
 
 
 class BlockType(Enum):
@@ -138,7 +138,7 @@ def process_blocks(data: str, part: PartType) -> DoublyLinkedList:
 
 
 def get_empty_spaces_by_length(blocks: DoublyLinkedList) -> Dict[int, Deque[Node]]:
-    empty_spaces = {i: deque() for i in range(1, 10)}
+    empty_spaces = defaultdict(deque)
     for node in blocks:
         if node.block.block_type == BlockType.FREE and node.block.length > 0:
             empty_spaces[node.block.length].append(node)
