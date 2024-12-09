@@ -1,5 +1,7 @@
+from ast import List
 from enum import Enum
-from typing import Optional
+from typing import Deque, Dict, Optional
+from collections import deque
 
 
 class BlockType(Enum):
@@ -128,7 +130,7 @@ def process_blocks(data: str, part: PartType) -> DoublyLinkedList:
             blocks.push_back(Block(BlockType.DATA, i // 2, num))
             last_data_node = blocks.tail
         else:
-            blocks.push_back(Block(BlockType.FREE, None, num))
+            blocks.push_back(Block(BlockType.FREE, i // 2, num))
             if first_empty_node is None:
                 first_empty_node = blocks.tail
     if part == PartType.PART_1:
@@ -138,30 +140,55 @@ def process_blocks(data: str, part: PartType) -> DoublyLinkedList:
     return blocks
 
 
+def get_empty_spaces_by_length(blocks: DoublyLinkedList) -> Dict[int, Deque[Node]]:
+    empty_spaces: Dict[int, Deque[Node]] = {}
+    for i in range(1, 10):
+        empty_spaces[i] = deque()
+    for node in blocks:
+        if node.block.block_type == BlockType.FREE and node.block.length > 0:
+            empty_spaces[node.block.length].append(node)
+    return empty_spaces
+
+
 def part_2(blocks: DoublyLinkedList) -> None:
-    for last_node in reversed(blocks):
-        if last_node.block.block_type == BlockType.DATA:
-            for search_pointer in blocks:
-                if search_pointer == last_node:
-                    break
-                if (
-                    search_pointer.block.block_type == BlockType.FREE
-                    and search_pointer.block.length >= last_node.block.length
-                ):
-                    search_pointer.block.length -= last_node.block.length
-                    blocks.insert_after_node(
-                        search_pointer.prev,
-                        Block(
-                            BlockType.DATA,
-                            last_node.block.id,
-                            last_node.block.length,
-                        ),
+    empty_spaces: Dict[int, Deque[Node]] = get_empty_spaces_by_length(blocks)
+    nodes = list(blocks)
+    last_processed_id = len(nodes)
+    for last_node in reversed(nodes):
+        if (
+            last_node.block.block_type == BlockType.DATA
+            and last_node.block.id < last_processed_id
+        ):
+            potential: List[Block] = [
+                empty_spaces[i][0].block
+                for i in range(last_node.block.length, 10)
+                if empty_spaces[i] and empty_spaces[i][0].block.id < last_node.block.id
+            ]
+            potential.sort(key=lambda x: x.id)
+
+            if potential:
+                target_length = potential[0].length
+                target = empty_spaces[target_length].popleft()
+                target.block.length -= last_node.block.length
+                blocks.insert_after_node(
+                    target.prev,
+                    Block(
+                        BlockType.DATA,
+                        last_node.block.id,
+                        last_node.block.length,
+                    ),
+                )
+                last_node.block.block_type = BlockType.FREE
+                if target.block.length == 0:
+                    blocks.remove_at_node(target)
+                else:
+                    empty_spaces[target.block.length].appendleft(target)
+                    empty_spaces[target.block.length] = deque(
+                        sorted(
+                            empty_spaces[target.block.length], key=lambda x: x.block.id
+                        )
                     )
-                    last_node.block.id = None
-                    last_node.block.block_type = BlockType.FREE
-                    if search_pointer.block.length == 0:
-                        blocks.remove_at_node(search_pointer)
-                    break
+            last_processed_id = last_node.block.id
 
 
 def part_1(
