@@ -1,6 +1,6 @@
 import unittest
 
-from aoc_{year}_{day} import main
+from .aoc_{year}_{day} import main
 
 class Test{year}{day}(unittest.TestCase):
     def test_day_{year}_{day}(self):

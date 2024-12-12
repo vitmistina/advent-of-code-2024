@@ -1,5 +1,5 @@
 from time import time
-from aoc_2024_07 import Calibrator, PartType
+from .aoc_2024_07 import Calibrator, PartType
 
 if __name__ == "__main__":
     with open("./2024_07/2024_07_input.txt") as f:

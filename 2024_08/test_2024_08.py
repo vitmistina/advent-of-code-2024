@@ -1,6 +1,6 @@
 import unittest
 
-from aoc_2024_08 import main
+from .aoc_2024_08 import main
 
 
 class Test202408(unittest.TestCase):
