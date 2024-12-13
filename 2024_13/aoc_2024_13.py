@@ -59,10 +59,6 @@ class ClawMachine:
         return int(a * BUTTON_COSTS["A"] + b * BUTTON_COSTS["B"])
 
 
-def calculate_total_cost(data: List[ClawMachine], part_type: PartType) -> int:
-    return
-
-
 def read_input_file(input_file_path: str) -> List[ClawMachine]:
     with open(input_file_path) as f:
         return [ClawMachine(part) for part in f.read().split("\n\n")]
