@@ -81,7 +81,7 @@ def find_tree_shapes(robots: List[Robot], width: int, height: int) -> int:
         quadrants = count_robots_in_quadrants(robots, width, height, time)
         percent = [q * 100 / len(robots) for q in quadrants.values()]
         if any(p > 50 for p in percent):
-            print_on_grid(robots, width, height, time)
+            # print_on_grid(robots, width, height, time)
             return time
 
 
