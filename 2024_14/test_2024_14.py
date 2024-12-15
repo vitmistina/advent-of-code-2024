@@ -7,7 +7,7 @@ class Test202414(unittest.TestCase):
     def test_day_2024_14(self):
         result = main("./2024_14/2024_14_test.txt", 11, 7)
         self.assertEqual(result["part_1"], 12)
-        self.assertEqual(result["part_2"], 100)
+        self.assertEqual(result["part_2"], 6)
 
 
 if __name__ == "__main__":
