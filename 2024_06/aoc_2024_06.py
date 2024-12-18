@@ -79,6 +79,7 @@ class Guard:
         self.x = x
         self.y = y
         self.direction = start_direction
+        self.guard_path: List[Step] = [Step(self.x, self.y, self.direction)]
 
     def __repr__(self) -> str:
         return f"Guard at ({self.x}, {self.y}) facing {self.direction}"
@@ -141,9 +142,6 @@ class Map:
             return output, guard
 
     def evaluate_guard_path(self) -> Set[Step]:
-        visited_cells: Set[Step] = set(
-            [Step(self.guard.x, self.guard.y, self.guard.direction)]
-        )
         for _ in range(MAX_STEPS):
             x, y = self.guard.x, self.guard.y
             dx, dy = DIRECTION_COORDS[self.guard.direction]
@@ -154,19 +152,17 @@ class Map:
                 or new_y < 0
                 or new_y >= len(self.grid)
             ):
-                return set([(step.x, step.y) for step in visited_cells])
+                return self.guard.guard_path
             elif self.grid[new_y][new_x].is_obstacle or self.extra_obstacle == (
                 new_x,
                 new_y,
             ):
                 new_dir = self.guard.rotate()
-                visited_cells.add(Step(x, y, new_dir))
+                self.guard.guard_path.append(Step(x, y, new_dir))
             else:
                 self.guard.move(new_x, new_y)
                 next_step = Step(new_x, new_y, self.guard.direction)
-                if next_step in visited_cells:
-                    return set()
-                visited_cells.add(next_step)
+                self.guard.guard_path.append(next_step)
         print("Guard reached max steps")
         return None
 
@@ -180,28 +176,68 @@ class Map:
                     print("O", end="")
                 else:
                     print(cell, end="")
+            print()
+        print()
 
-    def find_loops(self, steps: Set[Tuple[int, int]] = None) -> int:
-        steps.remove((self.guard.x, self.guard.y))
+    def find_loops_efficiently(self, steps: List[Step]) -> int:
         count = 0
-        for checked, (x, y) in enumerate(steps, 1):
-            self.reset_guard()
-            self.extra_obstacle = (x, y)
-            steps_without_loops = self.evaluate_guard_path()
-            if len(steps_without_loops) == 0:
+        for i, step in enumerate(steps[1:], 1):
+            x, y = step.x, step.y
+            # Get the guard's state before reaching the blocked position
+            prev_step = self.guard.guard_path[i - 1]
+            # Recreate the guard's state at that moment
+            guard = Guard(prev_step.x, prev_step.y, prev_step.direction)
+            # Since the next cell is now blocked, the guard will rotate
+            guard.rotate()
+
+            visited_states = set()
+            loop_detected = False
+            for _ in range(MAX_STEPS):  # Limit the simulation steps
+                state = (guard.x, guard.y, guard.direction)
+                if state in visited_states:
+                    loop_detected = True
+                    # print(f"Loop detected at {step}")
+                    break  # Loop detected
+                visited_states.add(state)
+
+                dx, dy = DIRECTION_COORDS[guard.direction]
+                new_x, new_y = guard.x + dx, guard.y + dy
+
+                # If the next position is the one we blocked, the guard rotates
+                if (new_x, new_y) == (x, y):
+                    guard.rotate()
+                    continue
+                # If the guard exits the map, simulation ends
+                if (
+                    new_x < 0
+                    or new_x >= len(self.grid[0])
+                    or new_y < 0
+                    or new_y >= len(self.grid)
+                ):
+                    # print(f"Non-loop (exit) detected at {step}")
+                    break
+                # If the guard encounters an obstacle, it rotates
+                if self.grid[new_y][new_x].is_obstacle or self.extra_obstacle == (
+                    new_x,
+                    new_y,
+                ):
+                    guard.rotate()
+                else:
+                    guard.move(new_x, new_y)
+            if loop_detected:
                 count += 1
-            if checked % 100 == 0:
-                print(f"Found {count} obstacles in {checked}/{len(steps)}")
         return count
 
 
 def main(input_file_path: str):
     map = Map(input_file_path)
     steps = map.evaluate_guard_path()
-    part_1 = len(steps)
+    part_1 = len(set([(step.x, step.y) for step in steps]))
+    # print()
+    # map.print(steps)
     # 1586 right answer
-    map = Map(input_file_path)
-    part_2 = map.find_loops(steps)
+    # part_2 = None
+    part_2 = map.find_loops_efficiently(steps)
     return {"part_1": part_1, "part_2": part_2}
 
 
