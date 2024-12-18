@@ -1,8 +1,8 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 class Machine:
-    def __init__(self, input_str):
+    def __init__(self, input_str: str):
         registries, instructions = input_str.split("\n\n")
         self.a, self.b, self.c = [
             int(line.strip().split()[2]) for line in registries.split("\n")
@@ -22,26 +22,28 @@ class Machine:
         while self.inst_pointer < len(self.instructions):
             current_opcode = self.instructions[self.inst_pointer]
             operand = self.instructions[self.inst_pointer + 1]
-            # switch from 0 to 7 for current_opcode
-            match current_opcode:
-                case 0:
-                    self._adv(operand)
-                case 1:
-                    self._bxl(operand)
-                case 2:
-                    self._bst(operand)
-                case 3:
-                    self._jnz(operand)
-                case 4:
-                    self._bxc(operand)
-                case 5:
-                    output.append(self._out(operand))
-                case 6:
-                    self._bdv(operand)
-                case 7:
-                    self._cdv(operand)
+            self.execute_instruction(current_opcode, operand, output)
             self.inst_pointer += 2
         return ",".join(map(str, output))
+
+    def execute_instruction(self, opcode: int, operand: int, output: List[int]):
+        match opcode:
+            case 0:
+                self._adv(operand)
+            case 1:
+                self._bxl(operand)
+            case 2:
+                self._bst(operand)
+            case 3:
+                self._jnz(operand)
+            case 4:
+                self._bxc(operand)
+            case 5:
+                output.append(self._out(operand))
+            case 6:
+                self._bdv(operand)
+            case 7:
+                self._cdv(operand)
 
     def _combo_operand(self, operand: int) -> int:
         match operand:
@@ -90,47 +92,38 @@ def convert_to_decimal(octal: str) -> int:
     return int(octal, 8)
 
 
-def main(input_file_path: str, has_part_2=False):
+def main(input_file_path: str, has_part_2: bool = False) -> dict:
     with open(input_file_path) as f:
         input_str = f.read()
-        m = Machine(input_str)
-        part_1 = m.process_instructions()
+        machine = Machine(input_str)
+        part_1 = machine.process_instructions()
 
-        part_2 = None
-        # m = Machine(input_str)
-        # instr = ",".join(map(str, m.instructions))
-        # instr_rev_num = int(instr[::-1].replace(",", ""))
-        # iterations = 0
-
-        # m.a = 281474976710656 + 15375
-        # m.inst_pointer = 0
-        # new_instructions = m.process_instructions()
-        # new_instr_rev_num = int(new_instructions[::-1].replace(",", ""))
+        part_2: Optional[int] = None
         if has_part_2:
-            m = Machine(input_str)
-            # candidates are octal strings with 16 digits, in the tuple they have the current reached point
-            # working back from the end of the instructions
-            instr_len = len(m.instructions)
-            candidates: List[Tuple[str, int, int]] = [("0" * instr_len, 0, 0)]
-            while candidates:
-                octal, integer, reached = candidates.pop()
-                if reached == instr_len:
-                    part_2 = integer
-                    break
-                for j in list(reversed(range(0, 8))):
-                    new_octal = octal[:reached] + str(j) + octal[reached + 1 :]
-                    prelim_res = m.process_from_start_with_a(
-                        convert_to_decimal(new_octal)
-                    ).split(",")
-
-                    if len(prelim_res) > -reached + 1 and prelim_res[
-                        -(reached + 1)
-                    ] == str(m.instructions[-(reached + 1)]):
-                        candidates.append(
-                            (new_octal, convert_to_decimal(new_octal), reached + 1)
-                        )
+            part_2 = find_part_2_solution(input_str, machine)
 
         return {"part_1": part_1, "part_2": part_2}
+
+
+def find_part_2_solution(input_str: str, machine: Machine) -> Optional[int]:
+    instr_len = len(machine.instructions)
+    candidates: List[Tuple[str, int, int]] = [("0" * instr_len, 0, 0)]
+    while candidates:
+        octal, integer, reached = candidates.pop()
+        if reached == instr_len:
+            return integer
+        for j in reversed(range(8)):
+            new_octal = octal[:reached] + str(j) + octal[reached + 1 :]
+            prelim_res = machine.process_from_start_with_a(
+                convert_to_decimal(new_octal)
+            ).split(",")
+            if len(prelim_res) > -reached + 1 and prelim_res[-(reached + 1)] == str(
+                machine.instructions[-(reached + 1)]
+            ):
+                candidates.append(
+                    (new_octal, convert_to_decimal(new_octal), reached + 1)
+                )
+    return None
 
 
 if __name__ == "__main__":
