@@ -100,12 +100,12 @@ def main(input_file_path: str, has_part_2: bool = False) -> dict:
 
         part_2: Optional[int] = None
         if has_part_2:
-            part_2 = find_part_2_solution(input_str, machine)
+            part_2 = find_part_2_solution(machine)
 
         return {"part_1": part_1, "part_2": part_2}
 
 
-def find_part_2_solution(input_str: str, machine: Machine) -> Optional[int]:
+def find_part_2_solution(machine: Machine) -> Optional[int]:
     instr_len = len(machine.instructions)
     candidates: List[Tuple[str, int, int]] = [("0" * instr_len, 0, 0)]
     while candidates:
