@@ -44,22 +44,42 @@ class Map:
                     dq.append((new_x, new_y))
         return dist_map
 
-    def find_shortcuts_over_threshold(self, threshhold: int) -> Dict[int, List[FromTo]]:
+    def _find_coords_within_manhattan_distance(
+        self, start: Coord, distance: int
+    ) -> List[Coord]:
+        coords = []
+        for x in range(start[0] - distance, start[0] + distance + 1):
+            for y in range(start[1] - distance, start[1] + distance + 1):
+                if (
+                    abs(x - start[0]) + abs(y - start[1]) <= distance
+                    and (x, y) in self.dist_from_end
+                ):
+                    coords.append((x, y))
+        return coords
+
+    def find_shortcuts_over_threshold(
+        self, threshhold: int, distance: int
+    ) -> Dict[int, List[FromTo]]:
         shortcuts = defaultdict(list)
         for shortcut_from, start_distance in self.dist_from_start.items():
             if start_distance > self.shortest_path_len:
                 continue
-            for direction in DIRECTIONS:
-                shortcut_end = (
-                    shortcut_from[0] + direction[0] * 2,
-                    shortcut_from[1] + direction[1] * 2,
-                )
-                end_distance = self.dist_from_end.get(shortcut_end, float("inf"))
-                time_saved = self.shortest_path_len - (
-                    start_distance + end_distance + 2
-                )
-                if time_saved >= threshhold:
-                    shortcuts[time_saved].append((shortcut_from, shortcut_end))
+
+            for candidate in self._find_coords_within_manhattan_distance(
+                shortcut_from, distance
+            ):
+                if candidate in self.dist_from_end:
+                    end_distance = self.dist_from_end[candidate]
+                    time_saved = self.shortest_path_len - (
+                        start_distance
+                        + end_distance
+                        + (
+                            abs(candidate[0] - shortcut_from[0])
+                            + abs(candidate[1] - shortcut_from[1])
+                        )
+                    )
+                    if time_saved >= threshhold:
+                        shortcuts[time_saved].append((shortcut_from, candidate))
 
         return shortcuts
 
@@ -68,12 +88,11 @@ def main(input_file_path: str, threshhold: int) -> dict[str, int]:
     with open(input_file_path) as f:
         data = [list(line.strip()) for line in f.readlines()]
         map = Map(data)
-        shortcuts = map.find_shortcuts_over_threshold(threshhold)
-        for time_saved, locs in shortcuts.items():
-            print(f"locations: {len(locs)}, Time saved: {time_saved}")
+        part_1 = map.find_shortcuts_over_threshold(threshhold, 2)
+        part_2 = map.find_shortcuts_over_threshold(threshhold, 20)
         return {
-            "part_1": sum([len(locs) for locs in shortcuts.values()]),
-            "part_2": None,
+            "part_1": sum([len(locs) for locs in part_1.values()]),
+            "part_2": sum([len(locs) for locs in part_2.values()]),
         }
 
 
