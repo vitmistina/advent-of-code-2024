@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List, Set, Tuple
-from copy import copy, deepcopy
+from copy import copy
 
 
 class Direction(Enum):
@@ -99,23 +99,6 @@ class Map:
             self.grid, self.guard = self.load_data(input_file_path)
             self.original_guard = copy(self.guard)
             self.non_loop_steps: Set[Set[Tuple[int, int]]] = set()
-        self.extra_obstacle: Tuple[int, int] = None
-
-    def reset_guard(self):
-        self.guard = copy(self.original_guard)
-
-    def copy_with_clear_visits(self) -> "Map":
-        copy = Map().load_data_from_grid(self.grid, self.guard)
-        for row in copy.grid:
-            for cell in row:
-                cell.is_visited = False
-                cell.visited_directions = set()
-        return copy
-
-    def load_data_from_grid(self, grid: List[List[Position]], guard: Guard) -> "Map":
-        self.grid = deepcopy(grid)
-        self.guard = deepcopy(guard)
-        return self
 
     def load_data(self, input_file_path: str) -> Tuple[List[List[Position]], Guard]:
         with open(input_file_path) as f:
@@ -153,10 +136,7 @@ class Map:
                 or new_y >= len(self.grid)
             ):
                 return self.guard.guard_path
-            elif self.grid[new_y][new_x].is_obstacle or self.extra_obstacle == (
-                new_x,
-                new_y,
-            ):
+            elif self.grid[new_y][new_x].is_obstacle:
                 new_dir = self.guard.rotate()
                 self.guard.guard_path.append(Step(x, y, new_dir))
             else:
@@ -172,8 +152,6 @@ class Map:
             for x, cell in enumerate(row):
                 if (x, y) in coords:
                     print("X", end="")
-                elif (x, y) == self.extra_obstacle:
-                    print("O", end="")
                 else:
                     print(cell, end="")
             print()
@@ -181,8 +159,12 @@ class Map:
 
     def find_loops_efficiently(self, steps: List[Step]) -> int:
         count = 0
+        tested_coordinates: Set[Tuple[int, int]] = {(steps[0].x, steps[0].y)}
         for i, step in enumerate(steps[1:], 1):
+            if (step.x, step.y) in tested_coordinates:
+                continue
             x, y = step.x, step.y
+            tested_coordinates.add((x, y))
             # Get the guard's state before reaching the blocked position
             prev_step = self.guard.guard_path[i - 1]
             # Recreate the guard's state at that moment
@@ -203,10 +185,6 @@ class Map:
                 dx, dy = DIRECTION_COORDS[guard.direction]
                 new_x, new_y = guard.x + dx, guard.y + dy
 
-                # If the next position is the one we blocked, the guard rotates
-                if (new_x, new_y) == (x, y):
-                    guard.rotate()
-                    continue
                 # If the guard exits the map, simulation ends
                 if (
                     new_x < 0
@@ -217,10 +195,7 @@ class Map:
                     # print(f"Non-loop (exit) detected at {step}")
                     break
                 # If the guard encounters an obstacle, it rotates
-                if self.grid[new_y][new_x].is_obstacle or self.extra_obstacle == (
-                    new_x,
-                    new_y,
-                ):
+                if self.grid[new_y][new_x].is_obstacle or (new_x, new_y) == (x, y):
                     guard.rotate()
                 else:
                     guard.move(new_x, new_y)
